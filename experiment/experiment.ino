@@ -45,7 +45,7 @@ void lowPassFilter(float *samples, int len, int passes = 2) {
 // --- 音色強調フィルタ群 ---
 void emphasizeThickness(float* samples, int len) {
   for (int i = 0; i < len; i++) {
-    samples[i] += 0.15 * sin(2.0 * PI * 3000 * i / SAMPLE_RATE); // 2500-3400Hz
+    samples[i] += 0.10 * sin(2.0 * PI * 3000 * i / SAMPLE_RATE); // 2500-3400Hz
   }
 }
 
@@ -155,7 +155,7 @@ void loop() {
   static int idx = 0;
   unsigned long now = millis();
 
-  if (now - lastMillis > 500) {
+  if (now - lastMillis > 1000) {
     lastMillis = now;
     f = doremiHz[idx];
     idx = (idx + 1) % numNotes;
