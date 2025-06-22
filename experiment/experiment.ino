@@ -1,13 +1,13 @@
 #include "FspTimer.h"
 #include <SoftwareSerial.h>
 
-#define SAMPLE_RATE 16000
-#define NUM_SAMPLE 2000
+#define SAMPLE_RATE 32000
+#define NUM_SAMPLE 400
 
 SoftwareSerial mySerial(3, 2);
 
 float f = 261.63;
-float amp = 0.6;
+float amp = 0.3;
 uint16_t waveform[NUM_SAMPLE];
 float phase = 0.0;
 float phaseInc = 0.0;
@@ -69,7 +69,17 @@ void maskMidSharpness(float* samples, int len) {
 
 // --- 波形生成 ---
 void generateTrumpetWave(float freq) {
-  float a1 = 1.0, a2 = 0.5, a3 = 0.3, a4 = 0.15, a5 = 0.1;
+  float a1 = 1.0;
+  float a2 = 1.0;
+  float a3 = 1.0;
+  float a4 = 0.9;
+  float a5 = 1.0;
+  float a6 = 0.8;
+  float a7 = 1.4;  // 高めの倍音強化
+  float a8 = 1.5;
+  float a9 = 1.4;
+  float a10 = 1.3;
+
   float modIndex = 3.0;
   float modFreqRatio = 2.5;
   static float tempSamples[NUM_SAMPLE];
@@ -81,27 +91,33 @@ void generateTrumpetWave(float freq) {
     float modulator = sin(modFreqRatio * angle);
     float fmWave = sin(angle + modIndex * modulator);
 
+    float attackMultiplier = (t < 0.01) ? (1.0 + 5.0 * (0.01 - t) / 0.01) : 1.0;
+
     float harmonics =
-      a1 * sin(angle) +
-      a2 * sin(2 * angle) +
-      a3 * sin(3 * angle) +
-      a4 * sin(4 * angle) +
-      a5 * sin(5 * angle);
+      a1 * sin(angle) * attackMultiplier +
+      a2 * sin(2 * angle) * attackMultiplier +
+      a3 * sin(3 * angle) * attackMultiplier +
+      a4 * sin(4 * angle) * attackMultiplier +
+      a5 * sin(5 * angle) * attackMultiplier +
+      a6 * sin(6 * angle) * attackMultiplier +
+      a7 * sin(7 * angle) * attackMultiplier +
+      a8 * sin(8 * angle) * attackMultiplier +
+      a9 * sin(9 * angle) * attackMultiplier +
+      a10 * sin(10 * angle) * attackMultiplier;
 
     float env = 1.0;
-    if (t < 0.02) env = t / 0.02;
+    if (t < 0.01) env = t / 0.01;
 
     float sample = 0.2 * fmWave + 0.8 * harmonics * env;
     sample = softClip(sample);
     tempSamples[i] = sample;
   }
 
-  // --- 音色変化反映 ---
-  emphasizeThickness(tempSamples, NUM_SAMPLE);   // 太さ
-  boostHighs(tempSamples, NUM_SAMPLE);           // 明るさ・鋭さ
-  addBrightnessNoise(tempSamples, NUM_SAMPLE);   // キンキン・鼓膜
-  maskMidSharpness(tempSamples, NUM_SAMPLE);     // 鋭さ補正
-  lowPassFilter(tempSamples, NUM_SAMPLE, 2);     // 総仕上げ
+  emphasizeThickness(tempSamples, NUM_SAMPLE);
+  boostHighs(tempSamples, NUM_SAMPLE);
+  addBrightnessNoise(tempSamples, NUM_SAMPLE);
+  maskMidSharpness(tempSamples, NUM_SAMPLE);
+  lowPassFilter(tempSamples, NUM_SAMPLE, 2);
 
   for (int i = 0; i < NUM_SAMPLE; i++) {
     float s = tempSamples[i];
@@ -138,8 +154,6 @@ void setup() {
   Serial.begin(115200);
   mySerial.begin(115200);
 
-  generateTrumpetWave(f);
-
   uint8_t type;
   int8_t ch = FspTimer::get_available_timer(type);
   if (ch < 0) return;
@@ -155,7 +169,7 @@ void loop() {
   static int idx = 0;
   unsigned long now = millis();
 
-  if (now - lastMillis > 1000) {
+  if (now - lastMillis > 500) {
     lastMillis = now;
     f = doremiHz[idx];
     idx = (idx + 1) % numNotes;
