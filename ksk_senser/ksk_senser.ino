@@ -40,6 +40,7 @@ void loop() {
 
   // 周波数を整数に変換（小数点が送れないため）
   int freqInt = (int)(freq);
+  int freqScaled = (int)(notes[index] * 100);  // 小数点第2位まで保持
 
   // シリアルモニタへ加速度と周波数を表示
   Serial.print("Accel X: ");
@@ -49,9 +50,9 @@ void loop() {
 
   // 周波数を文字列に変換してソフトウェアシリアルで送信
   // 改行を入れることで受信側でデータの区切りがわかりやすくなる
-  char buf[5];
-  sprintf(buf, "%d\n", freqInt);
-  mySerial.print(buf);
+    char buf[8];
+    sprintf(buf, "%05d\n", freqScaled);
+    mySerial.print(buf);
 
   delay(500); // 0.5秒待機（更新周期）
 }

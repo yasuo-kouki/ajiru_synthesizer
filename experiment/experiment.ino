@@ -76,87 +76,6 @@ void maskMidSharpness(float* samples, int len) {
   }
 }
 
-
-// --- トランペット風波形生成関数（実測倍音値適用・シンプル＆リアルな構成） ---
-void generateTrumpetWave(float freq) {
-  // --- 実測データに基づく倍音周波数と振幅 ---
-  const int numHarmonics = 11;
-  float harmonicFreqs[numHarmonics] = {
-    263.15, 524.42, 785.69, 1046.96, 1311.99, 1577.01,
-    1836.40, 2101.43, 2362.70, 2625.85, 2881.48
-  };
-  float harmonicAmps[numHarmonics] = {
-    214.28, 444.20, 298.71, 382.01, 431.24, 341.14,
-    208.12, 154.58, 98.78, 117.61, 49.81
-  };
-
-  // 振幅正規化（最大値で割る）
-  float maxAmp = harmonicAmps[0];
-  for (int i = 1; i < numHarmonics; i++) {
-    if (harmonicAmps[i] > maxAmp) maxAmp = harmonicAmps[i];
-  }
-  float normAmps[numHarmonics];
-  for (int i = 0; i < numHarmonics; i++) {
-    normAmps[i] = harmonicAmps[i] / maxAmp;
-  }
-
-  static float tempSamples[NUM_SAMPLE];
-
-  for (int i = 0; i < NUM_SAMPLE; i++) {
-    float t = (float)i / SAMPLE_RATE; // 時刻（秒）
-
-    // --- エンベロープ（立ち上がり・フェードアウト） ---
-    float env;
-    if (t < 0.1) {
-      env = pow(t / 0.1, 3);
-    } else if (t > 0.8) {
-      float r = (1.0 - t) / 0.2;
-      env = pow(r, 3);
-    } else {
-      env = 1.0;
-    }
-
-    // --- 倍音合成 ---
-    float sum = 0.0;
-    for (int n = 0; n < numHarmonics; n++) {
-      sum += normAmps[n] * sin(2.0 * PI * harmonicFreqs[n] * t);
-    }
-
-    // 音割れ防止＆エンベロープ
-    tempSamples[i] = softClip(sum * env);
-  }
-
-  // 音色調整エフェクトの適用（好みに応じて無効化可）
-  emphasizeThickness(tempSamples, NUM_SAMPLE);
-  boostHighs(tempSamples, NUM_SAMPLE);
-  addBrightnessNoise(tempSamples, NUM_SAMPLE);
-  maskMidSharpness(tempSamples, NUM_SAMPLE);
-  lowPassFilter(tempSamples, NUM_SAMPLE, 4);
-
-  // 0〜4095にスケーリング
-  for (int i = 0; i < NUM_SAMPLE; i++) {
-    float s = tempSamples[i];
-    int tmpVal = (int)((s * amp + 1.0) * 2047.5);
-    tmpVal = constrain(tmpVal, 0, 4095);
-    waveform[i] = (uint16_t)tmpVal;
-  }
-
-  // 位相進み量設定（基音の周期で回るようにする）
-  float vibrato = 1.0 + 0.003 * sin(2 * PI * millis() / 500.0);
-  phaseInc = freq * vibrato * NUM_SAMPLE / SAMPLE_RATE;
-}
-
-
-
-
-
-
-
-
-
-
-
-/*
 // --- トランペット風波形生成関数 ---
 void generateTrumpetWave(float freq) {
   float amplitudes[] = {
@@ -246,7 +165,7 @@ void generateTrumpetWave(float freq) {
    float vibrato = 1.0 + 0.003 * sin(2 * PI * millis() / 500.0);
    phaseInc = freq * vibrato * NUM_SAMPLE / SAMPLE_RATE;
 }
-*/
+
 
 
 
@@ -285,7 +204,9 @@ void setup() {
   int8_t ch = FspTimer::get_available_timer(type);
   if (ch < 0) return;
 
-  f = doremiBbHz[0];  // 初期音を設定（B♭トランペットのC）
+  f = doremiBbHz[4];  // 初期音を設定（B♭トランペットのC）
+
+  generateTrumpetWave(doremiHz[0]);
 
   // タイマー設定・開始（毎秒16000回、コールバック呼び出し）
   timer.begin(TIMER_MODE_PERIODIC, type, ch, SAMPLE_RATE, 50.0f, callback_playSound, nullptr);
@@ -295,22 +216,39 @@ void setup() {
 }
 
 // --- メインループ ---
+// --- メインループ ---
 void loop() {
   static unsigned long lastMillis = 0;
   static int idx = 0;
+  static unsigned long interval = 1000;  // 初期間隔は1秒
   unsigned long now = millis();
 
-  // 1秒ごとに次の音へ切り替え（ドレミファソラシドを順に再生）
-  if (now - lastMillis > 1000) {
+
+  /*
+  // 現在時刻が前回からintervalミリ秒以上経ったら
+  if (now - lastMillis > interval) {
     lastMillis = now;
+    
+    // ランダムに次の間隔を設定（1000, 700, 900ミリ秒のいずれか）
+    int choice = random(3); // 0〜2のどれか
+    if (choice == 0) {
+      interval = 1200;
+    } else if (choice == 1) {
+      interval = 700;
+    } else {
+      interval = 900;
+    }
+
     f = doremiBbHz[idx];         // 次の周波数に設定
     idx = (idx + 1) % numNotes;  // 音を循環
     generateTrumpetWave(f);      // 波形を再生成
   }
+  */
 
-  // ※この部分は未使用（送信用？）
+  // （オプション）送信処理
   if (sendData == 1) {
     sendData = 0;
     Serial.write(b, 2);
   }
 }
+

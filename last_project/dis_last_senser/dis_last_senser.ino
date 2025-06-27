@@ -45,7 +45,7 @@ float getModeDistance() {
   for (uint8_t i = 0; i < N; ++i) {
     if (distances[i] < 0) continue;
     for (uint8_t j = 0; j < N; ++j) {
-      if (fabs(distances[i] - distances[j]) < 0.5) count[i]++;
+      if (fabs(distances[i] - distances[j]) < 1.0) count[i]++;
     }
   }
 
