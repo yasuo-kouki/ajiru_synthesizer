@@ -7,7 +7,7 @@
 #define buttonPin     4
 #define DAC_PIN       A0
 
-#define DISTANCE_MAX  20.0f
+#define DISTANCE_MAX  72.67sf
 const float scale[] = {
   146.83f, 164.81f, 174.61f,
   220.00f, 246.94f
