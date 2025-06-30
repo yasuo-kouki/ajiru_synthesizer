@@ -7,10 +7,9 @@
 #define buttonPin     4
 #define DAC_PIN       A0
 
-#define DISTANCE_MAX  72.67sf
+#define DISTANCE_MAX  45.67f
 const float scale[] = {
-  146.83f, 164.81f, 174.61f,
-  220.00f, 246.94f
+  261.63, 293.66, 329.63, 349.23, 392.00
 };
 constexpr size_t SCALE_SZ = sizeof(scale) / sizeof(scale[0]);
 
@@ -32,7 +31,7 @@ float measureDistanceCM() {
 
 /*===== 最頻値（モード）を使った距離測定 =====*/
 float getModeDistance() {
-  const uint8_t N = 7;
+  const uint8_t N = 5;
   float distances[N];
   uint8_t count[N] = {0};
 
@@ -86,6 +85,9 @@ void setup() {
   timer.open();
 }
 
+
+
+
 void loop() {
   if (digitalRead(buttonPin) == LOW) {
     float d = getModeDistance();
@@ -93,14 +95,46 @@ void loop() {
       float freq = mapDistanceToFreq(d);
       lastDistance = d;
 
-      int freqInt = (int)(freq);
+      int freqInt = (int)(freq * 100);  // 100倍して送信
 
       Serial.print("距離[cm]: ");
       Serial.print(d, 1);
-      Serial.print(" -> 周波数[Hz]: ");
+      Serial.print(" -> 周波数[Hz*100]: ");
       Serial.println(freqInt);
 
-      char buf[6];
+      char buf[8];
+      sprintf(buf, "%d\n", freqInt);
+      mySerial.print(buf);
+
+    }
+    delay(100);
+  } else {
+    lastDistance = -1.0f;
+  }
+}
+
+
+/*
+void loop() {
+  unsigned long startMicros = micros();  // 計測開始時間
+
+  if (digitalRead(buttonPin) == LOW) {
+    float d = getModeDistance();
+    if (d > 0 && (lastDistance < 0 || fabsf(d - lastDistance) > 1.f)) {
+      float freq = mapDistanceToFreq(d);
+      lastDistance = d;
+
+      int freqInt = (int)(freq * 100);  // 100倍して送信
+
+      /*
+      Serial.print("距離[cm]: ");
+      Serial.print(d, 1);
+      Serial.print(" -> 周波数[Hz*100]: ");
+      Serial.println(freqInt);
+      */
+
+  /*
+      char buf[8];
       sprintf(buf, "%d\n", freqInt);
       mySerial.print(buf);
     }
@@ -108,4 +142,12 @@ void loop() {
   } else {
     lastDistance = -1.0f;
   }
+
+  unsigned long endMicros = micros();  // 計測終了時間
+  unsigned long elapsedTime = endMicros - startMicros;
+
+  Serial.print("ループ処理時間[us]: ");
+  Serial.println(elapsedTime);
 }
+*/
+

@@ -7,7 +7,7 @@
 SoftwareSerial mySerial(3, 2);   // ソフトウェアシリアル（ピン3=RX, ピン2=TX）
 
 float f = 233.08;                // 初期周波数：シ♭3（B♭トランペットのC音）
-float amp = 0.3;                 // 出力波形の振幅（0.0〜1.0）
+float amp = 0.6;                 // 出力波形の振幅（0.0〜1.0）
 uint16_t waveform[NUM_SAMPLE];  // 12bit DAC用の波形データ（0〜4095）
 float phase = 0.0;              // 現在の位相（小数点を含むことで補間も可能）
 float phaseInc = 0.0;           // 1サンプルごとの位相の進み幅
@@ -206,7 +206,7 @@ void setup() {
 
   f = doremiBbHz[4];  // 初期音を設定（B♭トランペットのC）
 
-  generateTrumpetWave(doremiHz[0]);
+  generateTrumpetWave(261.63);
 
   // タイマー設定・開始（毎秒16000回、コールバック呼び出し）
   timer.begin(TIMER_MODE_PERIODIC, type, ch, SAMPLE_RATE, 50.0f, callback_playSound, nullptr);
@@ -224,7 +224,7 @@ void loop() {
   unsigned long now = millis();
 
 
-  /*
+  
   // 現在時刻が前回からintervalミリ秒以上経ったら
   if (now - lastMillis > interval) {
     lastMillis = now;
@@ -243,7 +243,7 @@ void loop() {
     idx = (idx + 1) % numNotes;  // 音を循環
     generateTrumpetWave(f);      // 波形を再生成
   }
-  */
+  
 
   // （オプション）送信処理
   if (sendData == 1) {

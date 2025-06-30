@@ -6,7 +6,7 @@
 
 SoftwareSerial mySerial(3, 2);    // TX=2, RX=3
 
-float f = 233.08;                 // 現在の周波数（初期値：Bb3）
+float f = 261.63;                 // 現在の周波数（初期値：Bb3）
 float amp = 0.3;                  // 音の振幅（0.0～1.0）
 float phase = 0.0;                // 現在の位相
 float phaseInc = 0.0;             // サンプルごとの位相増加量
@@ -17,6 +17,11 @@ uint16_t* waveform = waveforms[0];  // 現在の出力波形（ポインタ）
 FspTimer timer;                   // タイマーインスタンス
 byte b[2];                        // シリアル送信用（未使用）
 int sendData = 0;                 // シリアル送信フラグ（未使用）
+
+const float doremiHz_1[] = {
+  261.63 , 293.66, 329.63 ,
+  349.23 , 392.00 
+};
 
 // ドレミファソ（C4～G4）の周波数（倍音合成の元となる）
 const float doremiHz[] = {
@@ -125,6 +130,7 @@ void setup() {
     generateTrumpetWave(transFreq, waveforms[i]);
   }
 
+
   // タイマー初期化（利用可能なチャンネルを使用）
   uint8_t type;
   int8_t ch = FspTimer::get_available_timer(type);
@@ -141,15 +147,16 @@ void loop() {
   if (mySerial.available()) {
     String input = mySerial.readStringUntil('\n');
     float newFreq = input.toFloat();  // 例: 39200 → 392.00Hz
-    Serial.println(newFreq);
+    
 
     if (newFreq > 0) {
       newFreq = newFreq / 100.0;  // 送信側が100倍して送る前提
+    Serial.println(newFreq);
 
       // 近い周波数を探して、該当する音を特定
       int noteIdx = -1;
       for (int i = 0; i < numNotes; i++) {
-        if (abs(doremiHz[i] - newFreq) < 1.0) {
+        if (abs(doremiHz_1[i] - newFreq) < 1.0) {
           noteIdx = i;
           break;
         }

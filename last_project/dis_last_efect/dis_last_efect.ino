@@ -101,12 +101,77 @@ void setup() {
   timer.start();
 }
 
+
+unsigned long baseMillis = 0;  // 基準起点時間
+
+// 現在時刻を基準起点からの経過時間に変換する関数
+unsigned long getAdjustedMillis() {
+  return millis() - baseMillis;
+}
+
+
+
+
+
+///*
+void loop() {
+  unsigned long startTime = micros();  // 処理開始時刻（μs単位）
+
+  if (mySerial.available()) {
+    String input = mySerial.readStringUntil('\n');
+    float recvFreq = input.toFloat();    // 例: "14683" → 14683.0
+    recvFreq = recvFreq / 100.0f;        // → 146.83
+
+    //Serial.println(recvFreq);
+
+    if (recvFreq > 0) {
+      for (int i = 0; i < numNotes; i++) {
+        if (recvFreq == doremiHz[i]) {
+          noInterrupts();
+          currentWave = waveTable[i];
+          f = doremiHz[i];
+          phase = 0.0;
+          phaseInc = f * NUM_SAMPLE / SAMPLE_RATE;
+          interrupts();
+          //Serial.print("切り替えた周波数: ");
+          //Serial.println(f);
+          break;
+        }
+      }
+    }
+  }
+
+  if (sendData == 1) {
+    sendData = 0;
+    //Serial.write(b, 2);
+  }
+
+  unsigned long endTime = micros();  // 処理終了時刻
+  Serial.print("loop()処理時間: ");
+  Serial.print(endTime - startTime);
+  Serial.println(" μs");  // μs単位に表示
+}
+
+ //*/
+
+
+
+
+
+
+
+/*
 // --- メインループ ---
 // ソフトウェアシリアルから周波数の整数値を受信し、対応波形に切り替える
 void loop() {
   if (mySerial.available()) {
     String input = mySerial.readStringUntil('\n');
-    int recvFreq = input.toInt();  // 受信文字列を整数化
+    float recvFreq = input.toFloat();    // 例: "14683" → 14683.0
+    recvFreq = recvFreq / 100.0f;        // → 146.83
+
+    
+    Serial.println(recvFreq);
+
 
     if (recvFreq > 0) {
       // 受信値が5音階配列のどれかに完全一致するかチェック
@@ -129,6 +194,7 @@ void loop() {
 
   if (sendData == 1) {
     sendData = 0;
-    Serial.write(b, 2);  // DAC出力値送信（必要に応じて）
+    //Serial.write(b, 2);  // DAC出力値送信（必要に応じて）
   }
 }
+*/

@@ -9,7 +9,7 @@ SoftwareSerial mySerial(3, 2);  // ソフトウェアシリアル：TX=3, RX=2
 const int numNotes = 5;
 const float notes[numNotes] = {261.63, 293.66, 329.63, 349.23, 392.00};
 
-const int sendButtonPin = 8;    // 送信専用ボタン（プルアップ接続）
+const int sendButtonPin = 5;    // 送信専用ボタン（プルアップ接続）
 
 // X軸回りの角度を計算（度）
 float calculateAngleX() {
@@ -22,9 +22,9 @@ float calculateAngleX() {
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   Wire.begin();
-  mySerial.begin(115200);
+  mySerial.begin(9600);
 
   pinMode(sendButtonPin, INPUT_PULLUP);  // 送信ボタン入力設定
 
