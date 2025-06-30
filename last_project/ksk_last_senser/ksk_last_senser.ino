@@ -60,6 +60,4 @@ void loop() {
     sprintf(buf, "%05d\n", freqScaled);  // 例："03920\n"
     mySerial.print(buf);
   }
-
-  delay(500);  // 更新間隔
 }
